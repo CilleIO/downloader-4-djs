@@ -9,7 +9,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from shared.utils import (
     log, log_debug, log_error, log_warn, log_success, log_info,
     sanitize_filename, format_duration, get_session_id,
-    analyze_failures, write_failed_tracks_file, VERBOSE_LOGGING
+    analyze_failures, write_failed_tracks_file, VERBOSE_LOGGING,
+    check_file_exists_in_folder, generate_unique_filename
 )
 
 class YouTubeDownloader:
@@ -106,9 +107,10 @@ class YouTubeDownloader:
         
         log_debug(f"Track info - Title: '{title}', Artist: '{artist}', Duration: {duration}s")
         
-        # Clean title for filename
+        # Clean title for filename and generate unique name
         clean_title = sanitize_filename(title)
-        output_template = os.path.join(output_folder, f"{clean_title}.%(ext)s")
+        unique_filename = generate_unique_filename(output_folder, f"{clean_title}.mp3")
+        output_template = os.path.join(output_folder, unique_filename.replace('.mp3', '.%(ext)s'))
         
         ydl_opts = {
             'outtmpl': output_template,
@@ -214,10 +216,23 @@ class YouTubeDownloader:
         log_debug(f"Successfully downloaded: {output_path}")
         return output_path, title, duration, artist, cover_art
 
-    def process_track(self, idx, track_url, total_tracks, download_folder, failed_tracks):
+    def process_track(self, idx, track_url, total_tracks, download_folder, failed_tracks, downloaded_files):
         """Process a single YouTube track"""
         try:
             log(f"[{idx}/{total_tracks}] Downloading YouTube track: {track_url}")
+            
+            # Check if this track was already downloaded (prevent duplicates)
+            track_info = self.get_track_info(track_url)
+            if track_info:
+                title = track_info.get('title', 'unknown_track')
+                # Check if a file with this title already exists
+                existing_file = check_file_exists_in_folder(download_folder, f"{sanitize_filename(title)}.mp3")
+                if existing_file and existing_file not in downloaded_files:
+                    log_debug(f"Track '{title}' already exists, skipping download")
+                    return existing_file
+            else:
+                title = 'unknown_track'
+            
             file_path, title, duration, artist, cover_art = self.download_track(track_url, download_folder, verbose=VERBOSE_LOGGING)
             
             if file_path and duration is not None:
@@ -322,16 +337,19 @@ class YouTubeDownloader:
             max_workers = min(8, max(1, len(track_urls)))
         
         # Download tracks
+        downloaded_files = []  # Track all downloaded files to prevent duplicates
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_url = {
-                executor.submit(self.process_track, idx, url, len(track_urls), download_folder, failed_tracks): url
+                executor.submit(self.process_track, idx, url, len(track_urls), download_folder, failed_tracks, downloaded_files): url
                 for idx, url in enumerate(track_urls, 1)
             }
             
             for future in as_completed(future_to_url):
                 result = future.result()
                 if result and os.path.exists(result):
-                    final_files.append(result)
+                    if result not in downloaded_files:  # Prevent duplicate entries
+                        final_files.append(result)
+                        downloaded_files.append(result)
                     successful_track_urls.append(future_to_url[future])
                 elif result:
                     log_warn(f"File not found after download: {result}")

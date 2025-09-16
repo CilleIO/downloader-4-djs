@@ -12,7 +12,7 @@ from shared.utils import (
     log, log_debug, log_error, log_warn, log_success, log_info,
     sanitize_filename, format_duration, get_session_id,
     is_relevant_youtube_match, analyze_failures, write_failed_tracks_file,
-    VERBOSE_LOGGING
+    VERBOSE_LOGGING, check_file_exists_in_folder, generate_unique_filename
 )
 
 class SpotifyDownloader:
@@ -110,9 +110,10 @@ class SpotifyDownloader:
             artist = track_info.get('artist', info.get('uploader', '')) if track_info else info.get('uploader', '')
             duration = info.get('duration', 0)
             
-            # Clean title for filename
-            clean_title = sanitize_filename(title)
-            output_template = os.path.join(output_folder, f"{clean_title}.%(ext)s")
+        # Clean title for filename and generate unique name
+        clean_title = sanitize_filename(title)
+        unique_filename = generate_unique_filename(output_folder, f"{clean_title}.mp3")
+        output_template = os.path.join(output_folder, unique_filename.replace('.mp3', '.%(ext)s'))
             
             ydl_opts = {
                 'outtmpl': output_template,
@@ -209,12 +210,18 @@ class SpotifyDownloader:
             log_error(f"YouTube download exception for '{title}': {e}")
             return None, title, duration, artist, None
 
-    def process_track(self, idx, track_info, total_tracks, download_folder, failed_tracks):
+    def process_track(self, idx, track_info, total_tracks, download_folder, failed_tracks, downloaded_files):
         """Process a single Spotify track by searching YouTube"""
         try:
             title = track_info.get('title', 'Unknown Track')
             artist = track_info.get('artist', 'Unknown Artist')
             log(f"[{idx}/{total_tracks}] Processing Spotify track: '{title}' by '{artist}'")
+            
+            # Check if this track was already downloaded (prevent duplicates)
+            existing_file = check_file_exists_in_folder(download_folder, f"{sanitize_filename(title)}.mp3")
+            if existing_file and existing_file not in downloaded_files:
+                log_debug(f"Track '{title}' already exists, skipping download")
+                return existing_file
             
             # Search YouTube for the track
             youtube_url, youtube_info = self.search_youtube_for_track(track_info)
@@ -347,16 +354,19 @@ class SpotifyDownloader:
         log(f"Processing {len(tracks_info)} manually entered tracks")
         
         # Process each track
+        downloaded_files = []  # Track all downloaded files to prevent duplicates
         with ThreadPoolExecutor(max_workers=4) as executor:
             future_to_track = {
-                executor.submit(self.process_track, idx, track_info, len(tracks_info), download_folder, failed_tracks): track_info
+                executor.submit(self.process_track, idx, track_info, len(tracks_info), download_folder, failed_tracks, downloaded_files): track_info
                 for idx, track_info in enumerate(tracks_info, 1)
             }
             
             for future in as_completed(future_to_track):
                 result = future.result()
                 if result and os.path.exists(result):
-                    final_files.append(result)
+                    if result not in downloaded_files:  # Prevent duplicate entries
+                        final_files.append(result)
+                        downloaded_files.append(result)
                 elif result:
                     log_warn(f"File not found after download: {result}")
         

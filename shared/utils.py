@@ -250,3 +250,32 @@ def write_failed_tracks_file(failed_tracks, output_path):
                 f.write(f"Title: {t['title']}\nURL: {t['url']}\nReason: {t['reason']}\n\n")
         return output_path
     return None
+
+def check_file_exists_in_folder(folder_path, filename_pattern):
+    """Check if a file with similar name already exists in the folder"""
+    if not os.path.exists(folder_path):
+        return None
+    
+    # Remove extension from pattern
+    base_pattern = filename_pattern.rsplit('.', 1)[0] if '.' in filename_pattern else filename_pattern
+    
+    for file in os.listdir(folder_path):
+        if file.endswith(('.mp3', '.m4a', '.wav', '.flac', '.webm', '.ogg')):
+            file_base = file.rsplit('.', 1)[0]
+            # Check if the base names are similar (accounting for slight variations)
+            if base_pattern.lower() in file_base.lower() or file_base.lower() in base_pattern.lower():
+                return os.path.join(folder_path, file)
+    return None
+
+def generate_unique_filename(folder_path, desired_filename):
+    """Generate a unique filename if the desired one already exists"""
+    if not os.path.exists(os.path.join(folder_path, desired_filename)):
+        return desired_filename
+    
+    base_name, ext = os.path.splitext(desired_filename)
+    counter = 1
+    while True:
+        new_filename = f"{base_name}_{counter}{ext}"
+        if not os.path.exists(os.path.join(folder_path, new_filename)):
+            return new_filename
+        counter += 1

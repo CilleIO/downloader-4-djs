@@ -4,8 +4,10 @@
 .env.development
 .env.production
 
-# Downloads folder
-downloads/
+# Downloads folder contents (keep folder structure)
+downloads/*
+!downloads/.gitkeep
+downloads/README.md
 *.zip
 
 # Python

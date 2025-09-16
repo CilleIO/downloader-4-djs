@@ -11,7 +11,8 @@ from shared.utils import (
     log, log_debug, log_error, log_warn, log_success,
     sanitize_filename, format_duration, get_session_id,
     is_relevant_youtube_match, analyze_failures, write_failed_tracks_file,
-    embed_metadata_and_cover, download_cover_art, VERBOSE_LOGGING
+    embed_metadata_and_cover, download_cover_art, VERBOSE_LOGGING,
+    check_file_exists_in_folder, generate_unique_filename
 )
 
 class SoundCloudDownloader:
@@ -99,7 +100,10 @@ class SoundCloudDownloader:
         log_debug(f"Track info - Title: '{title}', Artist: '{artist}', Duration: {duration}s")
         
         # Output template: just the title (no numbering, no artist)
-        output_template = os.path.join(output_folder, f"%(title)s.%(ext)s")
+        # Generate unique filename to prevent duplicates
+        clean_title = sanitize_filename(title)
+        unique_filename = generate_unique_filename(output_folder, f"{clean_title}.mp3")
+        output_template = os.path.join(output_folder, unique_filename.replace('.mp3', '.%(ext)s'))
         
         # Check if this is a YouTube URL (for fallback downloads)
         is_youtube = 'youtube.com' in url or 'youtu.be' in url
@@ -452,10 +456,23 @@ class SoundCloudDownloader:
             log(f"YouTube recovery error for '{query}': {e}")
             return None
 
-    def process_track(self, idx, track_url, total_tracks, download_folder, failed_tracks):
+    def process_track(self, idx, track_url, total_tracks, download_folder, failed_tracks, downloaded_files):
         """Process a single track with fallback logic"""
         try:
             log(f"[{idx}/{total_tracks}] Downloading SoundCloud track: {track_url}")
+            
+            # Check if this track was already downloaded (prevent duplicates)
+            track_info = self.get_track_info(track_url)
+            if track_info:
+                title = track_info.get('title', 'unknown_track')
+                # Check if a file with this title already exists
+                existing_file = check_file_exists_in_folder(download_folder, f"{sanitize_filename(title)}.mp3")
+                if existing_file and existing_file not in downloaded_files:
+                    log_debug(f"Track '{title}' already exists, skipping download")
+                    return existing_file
+            else:
+                title = 'unknown_track'
+            
             sc_file, title, duration, artist, cover_art = self.download_track(track_url, download_folder, verbose=VERBOSE_LOGGING)
             if sc_file and duration is not None:
                 if os.path.exists(sc_file):
@@ -611,16 +628,19 @@ class SoundCloudDownloader:
             max_workers = min(8, max(1, len(track_urls)))
         
         # Initial download attempt
+        downloaded_files = []  # Track all downloaded files to prevent duplicates
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_url = {
-                executor.submit(self.process_track, idx, url, len(track_urls), download_folder, failed_tracks): url
+                executor.submit(self.process_track, idx, url, len(track_urls), download_folder, failed_tracks, downloaded_files): url
                 for idx, url in enumerate(track_urls, 1)
             }
             
             for future in as_completed(future_to_url):
                 result = future.result()
                 if result and os.path.exists(result):
-                    final_files.append(result)
+                    if result not in downloaded_files:  # Prevent duplicate entries
+                        final_files.append(result)
+                        downloaded_files.append(result)
                     successful_track_urls.append(future_to_url[future])  # Track successful URL
                 elif result:
                     log_warn(f"File not found after download: {result}")
@@ -685,8 +705,13 @@ class SoundCloudDownloader:
                         try:
                             result = future.result()
                             if result and os.path.exists(result):
-                                recovery_files.append(result)
-                                log_success(f"SoundCloud retry successful: '{track['title']}'")
+                                # Check if this file is already in our downloaded files
+                                if result not in downloaded_files:
+                                    recovery_files.append(result)
+                                    downloaded_files.append(result)
+                                    log_success(f"SoundCloud retry successful: '{track['title']}'")
+                                else:
+                                    log_debug(f"SoundCloud retry file already exists: '{track['title']}'")
                             else:
                                 soundcloud_retry_failed.append(track)
                                 log_error(f"SoundCloud retry failed: '{track['title']}'")
