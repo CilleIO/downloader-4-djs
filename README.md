@@ -17,6 +17,8 @@ A comprehensive, open-source tool for DJs and music enthusiasts to download musi
 
 ### Installation
 
+> **📖 New to Python?** Check out our [Complete Setup Guide](SETUP_GUIDE.md) for detailed installation instructions including Python, pip, and FFmpeg setup.
+
 1. **Clone the repository**:
 
    ```bash
@@ -39,28 +41,31 @@ A comprehensive, open-source tool for DJs and music enthusiasts to download musi
 4. **Set up API credentials** (optional, for enhanced functionality):
 
    **Spotify API** (for Spotify playlist support):
+
    - Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
    - Create a new app (free)
    - Copy your Client ID and Client Secret
-   
+
    **SoundCloud Authentication** (for original quality downloads):
+
    - Option 1: Username and password
    - Option 2: Export cookies from your browser
-   
-   Set environment variables:
-     ```bash
-     # Windows
-     set SPOTIFY_CLIENT_ID=your_client_id
-     set SPOTIFY_CLIENT_SECRET=your_client_secret
-     set SOUNDCLOUD_USERNAME=your_username
-     set SOUNDCLOUD_PASSWORD=your_password
 
-     # Linux/Mac
-     export SPOTIFY_CLIENT_ID=your_client_id
-     export SPOTIFY_CLIENT_SECRET=your_client_secret
-     export SOUNDCLOUD_USERNAME=your_username
-     export SOUNDCLOUD_PASSWORD=your_password
-     ```
+   Set environment variables:
+
+   ```bash
+   # Windows
+   set SPOTIFY_CLIENT_ID=your_client_id
+   set SPOTIFY_CLIENT_SECRET=your_client_secret
+   set SOUNDCLOUD_USERNAME=your_username
+   set SOUNDCLOUD_PASSWORD=your_password
+
+   # Linux/Mac
+   export SPOTIFY_CLIENT_ID=your_client_id
+   export SPOTIFY_CLIENT_SECRET=your_client_secret
+   export SOUNDCLOUD_USERNAME=your_username
+   export SOUNDCLOUD_PASSWORD=your_password
+   ```
 
    - Or create a `.env` file in the project root:
      ```
@@ -290,6 +295,7 @@ Warning: Original download format is only available for registered users
 ```
 
 **Solution**: Add your SoundCloud credentials to environment variables:
+
 ```bash
 set SOUNDCLOUD_USERNAME=your_username
 set SOUNDCLOUD_PASSWORD=your_password
