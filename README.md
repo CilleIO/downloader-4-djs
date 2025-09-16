@@ -31,9 +31,32 @@ A comprehensive, open-source tool for DJs and music enthusiasts to download musi
    ```
 
 3. **Install FFmpeg** (required for audio processing):
+
    - **Windows**: Download from [FFmpeg website](https://ffmpeg.org/download.html) and add to PATH
    - **macOS**: `brew install ffmpeg`
    - **Linux**: `sudo apt install ffmpeg` (Ubuntu/Debian) or `sudo yum install ffmpeg` (CentOS/RHEL)
+
+4. **Set up Spotify API credentials** (optional, for Spotify playlist support):
+   - Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
+   - Create a new app (free)
+   - Copy your Client ID and Client Secret
+   - Set environment variables:
+
+     ```bash
+     # Windows
+     set SPOTIFY_CLIENT_ID=your_client_id
+     set SPOTIFY_CLIENT_SECRET=your_client_secret
+
+     # Linux/Mac
+     export SPOTIFY_CLIENT_ID=your_client_id
+     export SPOTIFY_CLIENT_SECRET=your_client_secret
+     ```
+
+   - Or create a `.env` file in the project root:
+     ```
+     SPOTIFY_CLIENT_ID=your_client_id
+     SPOTIFY_CLIENT_SECRET=your_client_secret
+     ```
 
 ### Basic Usage
 
@@ -107,11 +130,14 @@ python main.py youtube playlist "URL" --verbose
 #### Spotify Downloads
 
 ```bash
-# Manual track entry (recommended for Spotify)
+# Download a Spotify playlist (requires API setup)
+python main.py spotify playlist "https://open.spotify.com/playlist/PLAYLIST_ID"
+
+# Manual track entry (if no API credentials)
 python main.py spotify song --manual
 
-# The tool will prompt you to enter track information manually
-# It will then search YouTube for each track
+# The tool will automatically extract tracks if API is configured
+# Otherwise, it will prompt for manual track entry
 ```
 
 ### Legacy Mode (Auto-Detection)
@@ -134,6 +160,7 @@ downloader-4-djs/
 ├── requirements.txt        # Python dependencies
 ├── README.md              # This file
 ├── config.py              # Configuration settings
+├── env.example            # Example environment variables
 ├── downloads/             # Downloaded content (ignored by git)
 │   ├── .gitkeep          # Ensures folder is tracked
 │   └── README.md         # Folder documentation
@@ -145,7 +172,7 @@ downloader-4-djs/
 │   └── downloader.py      # SoundCloud-specific logic
 ├── spotify/               # Spotify downloader
 │   ├── __init__.py
-│   └── downloader.py      # Spotify-specific logic
+│   └── downloader.py      # Spotify-specific logic (requires API)
 └── youtube/               # YouTube downloader
     ├── __init__.py
     └── downloader.py      # YouTube-specific logic
@@ -161,6 +188,15 @@ When a track fails to download from the original platform, the tool automaticall
 2. **Searches YouTube** for the same track
 3. **Validates matches** using intelligent title matching
 4. **Reports detailed failure analysis** with categorized error types
+
+### Spotify API Integration
+
+For Spotify playlist downloads, the tool uses the official Spotify Web API:
+
+- **Free tier**: 100 requests per hour (sufficient for personal use)
+- **Automatic extraction**: Gets track names and artists directly from Spotify
+- **No API required**: Manual entry available if API credentials not provided
+- **YouTube fallback**: Searches YouTube for each track found
 
 ### Metadata Enhancement
 
@@ -220,6 +256,20 @@ Error: Module not found
 ```
 
 **Solution**: Run `pip install -r requirements.txt` to install all dependencies.
+
+#### Spotify API Issues
+
+```
+Error: Spotify API error: 401 Unauthorized
+```
+
+**Solution**: Check your Spotify API credentials in environment variables or `.env` file.
+
+```
+Error: Spotify API library not installed
+```
+
+**Solution**: Install the Spotify library with `pip install spotipy`.
 
 ### Debug Mode
 
