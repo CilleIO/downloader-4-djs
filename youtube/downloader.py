@@ -233,7 +233,7 @@ class YouTubeDownloader:
             else:
                 title = 'unknown_track'
             
-            file_path, title, duration, artist, cover_art = self.download_track(track_url, download_folder, verbose=VERBOSE_LOGGING)
+            file_path, title, duration, artist, cover_art = self.download_track(track_url, download_folder, verbose=verbose)
             
             if file_path and duration is not None:
                 if os.path.exists(file_path):
@@ -392,7 +392,7 @@ class YouTubeDownloader:
         log(f"Downloading single YouTube track: {track_url}")
         
         # Download the track
-        file_path, title, duration, artist, cover_art = self.download_track(track_url, download_folder, verbose=VERBOSE_LOGGING)
+        file_path, title, duration, artist, cover_art = self.download_track(track_url, download_folder, verbose=verbose)
         
         if file_path and duration is not None and os.path.exists(file_path):
             log_success(f"Downloaded '{title}' by '{artist}' ({format_duration(duration)})")
