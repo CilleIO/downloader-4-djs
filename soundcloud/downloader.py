@@ -100,9 +100,18 @@ class SoundCloudDownloader:
         log_debug(f"Track info - Title: '{title}', Artist: '{artist}', Duration: {duration}s")
         
         # Output template: just the title (no numbering, no artist)
-        # Generate unique filename to prevent duplicates
+        # Use consistent filename for duplicate prevention
         clean_title = sanitize_filename(title)
-        unique_filename = generate_unique_filename(output_folder, f"{clean_title}.mp3")
+        base_filename = f"{clean_title}.mp3"
+        
+        # Check if file already exists and use existing filename if it does
+        existing_file = check_file_exists_in_folder(output_folder, base_filename)
+        if existing_file:
+            log_debug(f"Using existing file: {existing_file}")
+            return existing_file, title, duration, artist, None
+        
+        # Generate unique filename only if needed
+        unique_filename = generate_unique_filename(output_folder, base_filename)
         output_template = os.path.join(output_folder, unique_filename.replace('.mp3', '.%(ext)s'))
         
         # Check if this is a YouTube URL (for fallback downloads)
@@ -272,6 +281,12 @@ class SoundCloudDownloader:
         url = track_info['url']
         title = track_info['title']
         
+        # Check if file already exists to prevent duplicates
+        existing_file = check_file_exists_in_folder(download_folder, f"{sanitize_filename(title)}.mp3")
+        if existing_file and os.path.exists(existing_file):
+            log_debug(f"Track '{title}' already exists, skipping retry")
+            return existing_file
+        
         log(f"Attempting SoundCloud retry for: {title}")
         log_debug(f"Retry URL: {url}")
         
@@ -423,6 +438,13 @@ class SoundCloudDownloader:
         """Attempt to recover a missing track using YouTube search with validation"""
         try:
             original_title = track_info.get('title', query)
+            
+            # Check if file already exists to prevent duplicates
+            existing_file = check_file_exists_in_folder(download_folder, f"{sanitize_filename(original_title)}.mp3")
+            if existing_file and os.path.exists(existing_file):
+                log_debug(f"Track '{original_title}' already exists, skipping YouTube recovery")
+                return existing_file
+            
             log_debug(f"YouTube recovery search: '{query}' for original: '{original_title}'")
             
             search_query = f"ytsearch8:{query}"  # Slightly more results to find better matches
