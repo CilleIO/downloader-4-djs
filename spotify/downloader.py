@@ -110,10 +110,10 @@ class SpotifyDownloader:
             artist = track_info.get('artist', info.get('uploader', '')) if track_info else info.get('uploader', '')
             duration = info.get('duration', 0)
             
-        # Clean title for filename and generate unique name
-        clean_title = sanitize_filename(title)
-        unique_filename = generate_unique_filename(output_folder, f"{clean_title}.mp3")
-        output_template = os.path.join(output_folder, unique_filename.replace('.mp3', '.%(ext)s'))
+            # Clean title for filename and generate unique name
+            clean_title = sanitize_filename(title)
+            unique_filename = generate_unique_filename(output_folder, f"{clean_title}.mp3")
+            output_template = os.path.join(output_folder, unique_filename.replace('.mp3', '.%(ext)s'))
             
             ydl_opts = {
                 'outtmpl': output_template,

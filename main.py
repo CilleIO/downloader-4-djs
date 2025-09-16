@@ -218,7 +218,7 @@ Examples:
                 verbose=args.verbose
             )
         
-                        else:
+        else:
             log_error(f"Invalid content type: {args.type}")
             sys.exit(1)
         
