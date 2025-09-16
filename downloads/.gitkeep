@@ -1,0 +1,2 @@
+# This file ensures the downloads folder is tracked by Git
+# All downloaded content will be ignored, but the folder structure is preserved

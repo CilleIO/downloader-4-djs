@@ -19,8 +19,8 @@ A comprehensive, open-source tool for DJs and music enthusiasts to download musi
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/yourusername/soundcloud-downloader.git
-   cd soundcloud-downloader
+   git clone https://github.com/CilleIO/downloader-4-djs.git
+   cd downloader-4-djs
    ```
 
 2. **Install Python dependencies**:
@@ -37,16 +37,16 @@ A comprehensive, open-source tool for DJs and music enthusiasts to download musi
 
 ```bash
 # Download a SoundCloud playlist
-python main.py soundcloud -playlist "https://soundcloud.com/user/sets/playlist-name"
+python main.py soundcloud playlist "https://soundcloud.com/user/sets/playlist-name"
 
 # Download a single YouTube track
-python main.py youtube -song "https://www.youtube.com/watch?v=VIDEO_ID"
+python main.py youtube song "https://www.youtube.com/watch?v=VIDEO_ID"
 
 # Download with verbose logging
-python main.py soundcloud -playlist "URL" --verbose
+python main.py soundcloud playlist "URL" --verbose
 
 # Custom output filename
-python main.py youtube -playlist "URL" --output "my_mix_2024"
+python main.py youtube playlist "URL" --output "my_mix_2024"
 ```
 
 ## 📖 Detailed Usage
@@ -63,12 +63,12 @@ python main.py <platform> <type> <url> [options]
 - `youtube` - YouTube videos and playlists
 
 #### Content Types
-- `-song` - Single track download
-- `-playlist` - Complete playlist download
+- `song` - Single track download
+- `playlist` - Complete playlist download
 
 #### Options
 - `--verbose, -v` - Enable detailed logging for debugging
-- `--output, -o` - Specify output filename (without .zip extension)
+- `--output, -o` - Specify custom folder name for playlist downloads
 - `--manual` - For Spotify: manually enter track information
 
 ### Examples
@@ -76,31 +76,31 @@ python main.py <platform> <type> <url> [options]
 #### SoundCloud Downloads
 ```bash
 # Download a SoundCloud playlist
-python main.py soundcloud -playlist "https://soundcloud.com/dj-name/sets/mix-name"
+python main.py soundcloud playlist "https://soundcloud.com/dj-name/sets/mix-name"
 
 # Download a single SoundCloud track
-python main.py soundcloud -song "https://soundcloud.com/artist/track-name"
+python main.py soundcloud song "https://soundcloud.com/artist/track-name"
 
 # Download with custom name and verbose logging
-python main.py soundcloud -playlist "URL" --output "summer_mix_2024" --verbose
+python main.py soundcloud playlist "URL" --output "summer_mix_2024" --verbose
 ```
 
 #### YouTube Downloads
 ```bash
 # Download a YouTube playlist
-python main.py youtube -playlist "https://www.youtube.com/playlist?list=PLAYLIST_ID"
+python main.py youtube playlist "https://www.youtube.com/playlist?list=PLAYLIST_ID"
 
 # Download a single YouTube video
-python main.py youtube -song "https://www.youtube.com/watch?v=VIDEO_ID"
+python main.py youtube song "https://www.youtube.com/watch?v=VIDEO_ID"
 
 # Download with verbose logging
-python main.py youtube -playlist "URL" --verbose
+python main.py youtube playlist "URL" --verbose
 ```
 
 #### Spotify Downloads
 ```bash
 # Manual track entry (recommended for Spotify)
-python main.py spotify -song --manual
+python main.py spotify song --manual
 
 # The tool will prompt you to enter track information manually
 # It will then search YouTube for each track
@@ -121,10 +121,14 @@ python main.py "URL" --verbose
 ## 🏗️ Project Structure
 
 ```
-soundcloud-downloader/
+downloader-4-djs/
 ├── main.py                 # Main entry point
 ├── requirements.txt        # Python dependencies
 ├── README.md              # This file
+├── config.py              # Configuration settings
+├── downloads/             # Downloaded content (ignored by git)
+│   ├── .gitkeep          # Ensures folder is tracked
+│   └── README.md         # Folder documentation
 ├── shared/                # Shared utilities
 │   ├── __init__.py
 │   └── utils.py           # Common functions, logging, metadata
@@ -214,12 +218,16 @@ This will show:
 - Error messages and stack traces
 - Metadata processing steps
 
-### Output Files
+### Output Organization
 
-The tool creates:
-- **ZIP file** containing all downloaded tracks
-- **FAILED_DOWNLOADS.txt** with details of any failed tracks
-- **Temporary folders** (automatically cleaned up)
+The tool organizes downloads as follows:
+- **Single tracks**: Downloaded directly to the `downloads/` folder
+- **Playlists**: Downloaded to subfolders with session-specific names:
+  - `downloads/SoundCloud_Playlist_[session_id]/`
+  - `downloads/Spotify_Manual_Tracks_[session_id]/`
+  - `downloads/YouTube_Playlist_[session_id]/`
+- **FAILED_DOWNLOADS.txt**: Created in each playlist folder with details of failed tracks
+- **No ZIP files**: All content is organized in folders for easy access
 
 ## 🔒 Legal Notice
 
@@ -246,8 +254,8 @@ We welcome contributions from the DJ community! Please:
 
 ```bash
 # Clone and setup development environment
-git clone https://github.com/yourusername/soundcloud-downloader.git
-cd soundcloud-downloader
+git clone https://github.com/CilleIO/downloader-4-djs.git
+cd downloader-4-djs
 pip install -r requirements.txt
 
 # Run tests (when available)
@@ -280,8 +288,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **Issues**: Report bugs and request features on [GitHub Issues](https://github.com/yourusername/soundcloud-downloader/issues)
-- **Discussions**: Join community discussions on [GitHub Discussions](https://github.com/yourusername/soundcloud-downloader/discussions)
+- **Issues**: Report bugs and request features on [GitHub Issues](https://github.com/CilleIO/downloader-4-djs/issues)
+- **Discussions**: Join community discussions on [GitHub Discussions](https://github.com/CilleIO/downloader-4-djs/discussions)
 - **Documentation**: Check the wiki for detailed guides
 
 ---
