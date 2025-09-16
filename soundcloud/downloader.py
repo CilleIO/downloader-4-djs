@@ -108,11 +108,17 @@ class SoundCloudDownloader:
         existing_file = check_file_exists_in_folder(output_folder, base_filename)
         if existing_file:
             log_debug(f"Using existing file: {existing_file}")
+            # Return the existing file with original metadata
             return existing_file, title, duration, artist, None
         
         # Generate unique filename only if needed
         unique_filename = generate_unique_filename(output_folder, base_filename)
         output_template = os.path.join(output_folder, unique_filename.replace('.mp3', '.%(ext)s'))
+        
+        # Check for SoundCloud authentication credentials
+        soundcloud_username = os.getenv('SOUNDCLOUD_USERNAME')
+        soundcloud_password = os.getenv('SOUNDCLOUD_PASSWORD')
+        soundcloud_cookies = os.getenv('SOUNDCLOUD_COOKIES')
         
         # Check if this is a YouTube URL (for fallback downloads)
         is_youtube = 'youtube.com' in url or 'youtu.be' in url
@@ -177,6 +183,17 @@ class SoundCloudDownloader:
                 'retries': 3,
                 'fragment_retries': 3,
             }
+            
+            # Add SoundCloud authentication if credentials are provided
+            if soundcloud_username and soundcloud_password:
+                ydl_opts['username'] = soundcloud_username
+                ydl_opts['password'] = soundcloud_password
+                log_debug("Using SoundCloud username/password authentication")
+            elif soundcloud_cookies:
+                ydl_opts['cookies'] = soundcloud_cookies
+                log_debug("Using SoundCloud cookies authentication")
+            else:
+                log_debug("No SoundCloud authentication provided - using anonymous access")
         
         # Add error capture
         class DownloadErrorHandler:
@@ -213,7 +230,8 @@ class SoundCloudDownloader:
             return None, title, duration, artist, None
         
         # Check for download success
-        base_filename = f"{title}.mp3"
+        sanitized_title = sanitize_filename(title)
+        base_filename = f"{sanitized_title}.mp3"
         output_path = os.path.join(output_folder, base_filename)
         
         if not os.path.exists(output_path):
@@ -247,6 +265,14 @@ class SoundCloudDownloader:
                 cover_art = thumb_path
                 log_debug(f"Found cover art: {thumb_path}")
                 break
+        
+        # Embed metadata to preserve original title
+        track_info = {
+            'title': title,
+            'artist': artist,
+            'album': f'SoundCloud Playlist {self.session_id}'
+        }
+        embed_metadata_and_cover(output_path, track_info, cover_art)
         
         log_debug(f"Successfully downloaded: {output_path}")
         return output_path, title, duration, artist, cover_art

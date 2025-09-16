@@ -36,26 +36,38 @@ A comprehensive, open-source tool for DJs and music enthusiasts to download musi
    - **macOS**: `brew install ffmpeg`
    - **Linux**: `sudo apt install ffmpeg` (Ubuntu/Debian) or `sudo yum install ffmpeg` (CentOS/RHEL)
 
-4. **Set up Spotify API credentials** (optional, for Spotify playlist support):
+4. **Set up API credentials** (optional, for enhanced functionality):
+
+   **Spotify API** (for Spotify playlist support):
    - Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
    - Create a new app (free)
    - Copy your Client ID and Client Secret
-   - Set environment variables:
-
+   
+   **SoundCloud Authentication** (for original quality downloads):
+   - Option 1: Username and password
+   - Option 2: Export cookies from your browser
+   
+   Set environment variables:
      ```bash
      # Windows
      set SPOTIFY_CLIENT_ID=your_client_id
      set SPOTIFY_CLIENT_SECRET=your_client_secret
+     set SOUNDCLOUD_USERNAME=your_username
+     set SOUNDCLOUD_PASSWORD=your_password
 
      # Linux/Mac
      export SPOTIFY_CLIENT_ID=your_client_id
      export SPOTIFY_CLIENT_SECRET=your_client_secret
+     export SOUNDCLOUD_USERNAME=your_username
+     export SOUNDCLOUD_PASSWORD=your_password
      ```
 
    - Or create a `.env` file in the project root:
      ```
      SPOTIFY_CLIENT_ID=your_client_id
      SPOTIFY_CLIENT_SECRET=your_client_secret
+     SOUNDCLOUD_USERNAME=your_username
+     SOUNDCLOUD_PASSWORD=your_password
      ```
 
 ### Basic Usage
@@ -270,6 +282,24 @@ Error: Spotify API library not installed
 ```
 
 **Solution**: Install the Spotify library with `pip install spotipy`.
+
+#### SoundCloud Authentication Issues
+
+```
+Warning: Original download format is only available for registered users
+```
+
+**Solution**: Add your SoundCloud credentials to environment variables:
+```bash
+set SOUNDCLOUD_USERNAME=your_username
+set SOUNDCLOUD_PASSWORD=your_password
+```
+
+```
+Error: SoundCloud authentication failed
+```
+
+**Solution**: Check your username and password, or try using cookies instead.
 
 ### Debug Mode
 
