@@ -19,7 +19,7 @@ setup(
     description="A comprehensive tool for downloading music from SoundCloud, Spotify, and YouTube",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/soundcloud-downloader",
+    url="https://github.com/CilleIO/downloader-4-djs",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 4 - Beta",
