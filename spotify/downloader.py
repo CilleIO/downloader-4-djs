@@ -7,6 +7,8 @@ Since Spotify doesn't allow direct downloads, this module searches YouTube for m
 import os
 import re
 import yt_dlp
+import requests
+from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from shared.utils import (
     log, log_debug, log_error, log_warn, log_success, log_info,
@@ -263,15 +265,157 @@ class SpotifyDownloader:
             return None
 
     def extract_playlist_tracks(self, playlist_url):
-        """Extract track information from Spotify playlist URL"""
-        # This is a simplified implementation
-        # In a real implementation, you would use the Spotify Web API
-        # For now, we'll return a placeholder that indicates manual track entry needed
+        """Extract track information from Spotify playlist URL using web scraping"""
+        try:
+            log(f"Attempting to extract tracks from Spotify playlist: {playlist_url}")
+            
+            # Convert Spotify URL to open.spotify.com format for web scraping
+            if 'open.spotify.com' not in playlist_url:
+                playlist_id = self.extract_spotify_id(playlist_url)[0]
+                playlist_url = f"https://open.spotify.com/playlist/{playlist_id}"
+            
+            # Set up headers to mimic a real browser
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Accept-Encoding': 'gzip, deflate',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+            }
+            
+            # Try to get the playlist page
+            response = requests.get(playlist_url, headers=headers, timeout=30)
+            response.raise_for_status()
+            
+            # Parse the HTML content
+            soup = BeautifulSoup(response.content, 'html.parser')
+            
+            # Look for track information in the page
+            tracks = []
+            
+            # Method 1: Look for JSON data in script tags
+            script_tags = soup.find_all('script', type='application/json')
+            for script in script_tags:
+                try:
+                    import json
+                    data = json.loads(script.string)
+                    # Navigate through the JSON structure to find tracks
+                    tracks.extend(self._extract_tracks_from_json(data))
+                except:
+                    continue
+            
+            # Method 2: Look for track elements in the DOM
+            if not tracks:
+                tracks.extend(self._extract_tracks_from_dom(soup))
+            
+            if tracks:
+                log_success(f"Successfully extracted {len(tracks)} tracks from playlist")
+                return tracks
+            else:
+                log_warn("Could not extract track information from Spotify playlist")
+                log_info("This might be due to Spotify's anti-scraping measures")
+                log_info("Please use the --manual flag to enter tracks manually")
+                return []
+                
+        except requests.RequestException as e:
+            log_error(f"Network error while accessing Spotify playlist: {e}")
+            log_info("Please use the --manual flag to enter tracks manually")
+            return []
+        except Exception as e:
+            log_error(f"Error extracting playlist tracks: {e}")
+            log_info("Please use the --manual flag to enter tracks manually")
+            return []
+    
+    def _extract_tracks_from_json(self, data):
+        """Extract track information from JSON data"""
+        tracks = []
         
-        log_warn("Spotify playlist extraction requires manual track entry or Spotify API integration")
-        log_info("Please provide individual track URLs or use the --manual flag to enter tracks manually")
+        def search_json(obj, path=""):
+            if isinstance(obj, dict):
+                for key, value in obj.items():
+                    if key == 'name' and 'artist' in str(obj).lower():
+                        # Found a track-like object
+                        track_name = obj.get('name', 'Unknown Track')
+                        artists = obj.get('artists', [])
+                        artist_name = artists[0].get('name', 'Unknown Artist') if artists else 'Unknown Artist'
+                        
+                        tracks.append({
+                            'title': track_name,
+                            'artist': artist_name,
+                            'url': f"Spotify track: {track_name} by {artist_name}"
+                        })
+                    elif isinstance(value, (dict, list)):
+                        search_json(value, f"{path}.{key}")
+            elif isinstance(obj, list):
+                for i, item in enumerate(obj):
+                    search_json(item, f"{path}[{i}]")
         
-        return []
+        search_json(data)
+        return tracks
+    
+    def _extract_tracks_from_dom(self, soup):
+        """Extract track information from DOM elements"""
+        tracks = []
+        
+        # Look for various possible selectors that might contain track info
+        selectors = [
+            '[data-testid="tracklist-row"]',
+            '.tracklist-row',
+            '[data-testid="entity-row"]',
+            '.entity-row',
+            'div[data-testid*="track"]',
+            'div[data-testid*="song"]'
+        ]
+        
+        for selector in selectors:
+            elements = soup.select(selector)
+            for element in elements:
+                try:
+                    # Try to extract track name and artist
+                    track_name = None
+                    artist_name = None
+                    
+                    # Look for track title
+                    title_selectors = [
+                        '[data-testid="track-name"]',
+                        '.track-name',
+                        'span[data-testid*="title"]',
+                        'div[data-testid*="title"]'
+                    ]
+                    
+                    for title_sel in title_selectors:
+                        title_elem = element.select_one(title_sel)
+                        if title_elem:
+                            track_name = title_elem.get_text(strip=True)
+                            break
+                    
+                    # Look for artist name
+                    artist_selectors = [
+                        '[data-testid="track-artist"]',
+                        '.track-artist',
+                        'span[data-testid*="artist"]',
+                        'div[data-testid*="artist"]'
+                    ]
+                    
+                    for artist_sel in artist_selectors:
+                        artist_elem = element.select_one(artist_sel)
+                        if artist_elem:
+                            artist_name = artist_elem.get_text(strip=True)
+                            break
+                    
+                    if track_name and track_name != 'Unknown Track':
+                        tracks.append({
+                            'title': track_name,
+                            'artist': artist_name or 'Unknown Artist',
+                            'url': f"Spotify track: {track_name} by {artist_name or 'Unknown Artist'}"
+                        })
+                        
+                except Exception as e:
+                    log_debug(f"Error parsing track element: {e}")
+                    continue
+        
+        return tracks
 
     def download_playlist(self, playlist_url, zip_filename=None, verbose=False):
         """Download a Spotify playlist by searching YouTube for each track"""
