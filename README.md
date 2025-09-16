@@ -18,12 +18,14 @@ A comprehensive, open-source tool for DJs and music enthusiasts to download musi
 ### Installation
 
 1. **Clone the repository**:
+
    ```bash
    git clone https://github.com/CilleIO/downloader-4-djs.git
    cd downloader-4-djs
    ```
 
 2. **Install Python dependencies**:
+
    ```bash
    pip install -r requirements.txt
    ```
@@ -58,15 +60,18 @@ python main.py <platform> <type> <url> [options]
 ```
 
 #### Platforms
+
 - `soundcloud` - SoundCloud tracks and playlists
 - `spotify` - Spotify tracks and playlists (with YouTube fallback)
 - `youtube` - YouTube videos and playlists
 
 #### Content Types
+
 - `song` - Single track download
 - `playlist` - Complete playlist download
 
 #### Options
+
 - `--verbose, -v` - Enable detailed logging for debugging
 - `--output, -o` - Specify custom folder name for playlist downloads
 - `--manual` - For Spotify: manually enter track information
@@ -74,6 +79,7 @@ python main.py <platform> <type> <url> [options]
 ### Examples
 
 #### SoundCloud Downloads
+
 ```bash
 # Download a SoundCloud playlist
 python main.py soundcloud playlist "https://soundcloud.com/dj-name/sets/mix-name"
@@ -86,6 +92,7 @@ python main.py soundcloud playlist "URL" --output "summer_mix_2024" --verbose
 ```
 
 #### YouTube Downloads
+
 ```bash
 # Download a YouTube playlist
 python main.py youtube playlist "https://www.youtube.com/playlist?list=PLAYLIST_ID"
@@ -98,6 +105,7 @@ python main.py youtube playlist "URL" --verbose
 ```
 
 #### Spotify Downloads
+
 ```bash
 # Manual track entry (recommended for Spotify)
 python main.py spotify song --manual
@@ -157,6 +165,7 @@ When a track fails to download from the original platform, the tool automaticall
 ### Metadata Enhancement
 
 The tool automatically:
+
 - Embeds track metadata (title, artist, album)
 - Downloads and embeds cover art
 - Uses high-quality audio formats (192kbps MP3)
@@ -181,27 +190,35 @@ The tool automatically:
 ### Common Issues
 
 #### FFmpeg Not Found
+
 ```
 Error: FFmpeg not found
 ```
+
 **Solution**: Install FFmpeg and ensure it's in your system PATH.
 
 #### Permission Errors
+
 ```
 Error: Access denied / 403 Forbidden
 ```
+
 **Solution**: Some tracks may be private or region-locked. The tool will attempt YouTube fallback.
 
 #### Network Timeouts
+
 ```
 Error: Connection timeout
 ```
+
 **Solution**: The tool includes automatic retries with progressive backoff.
 
 #### Missing Dependencies
+
 ```
 Error: Module not found
 ```
+
 **Solution**: Run `pip install -r requirements.txt` to install all dependencies.
 
 ### Debug Mode
@@ -209,10 +226,11 @@ Error: Module not found
 Enable verbose logging to see detailed information:
 
 ```bash
-python main.py soundcloud -playlist "URL" --verbose
+python main.py soundcloud playlist "URL" --verbose
 ```
 
 This will show:
+
 - Detailed download progress
 - Network requests and responses
 - Error messages and stack traces
@@ -221,6 +239,7 @@ This will show:
 ### Output Organization
 
 The tool organizes downloads as follows:
+
 - **Single tracks**: Downloaded directly to the `downloads/` folder
 - **Playlists**: Downloaded to subfolders with session-specific names:
   - `downloads/SoundCloud_Playlist_[session_id]/`
@@ -296,4 +315,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Made with ❤️ for the DJ community**
 
-*Happy mixing! 🎧*
+_Happy mixing! 🎧_

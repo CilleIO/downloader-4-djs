@@ -10,11 +10,11 @@ Platforms:
     soundcloud, spotify, youtube
 
 Types:
-    -song, -playlist
+    song, playlist
 
 Options:
     --verbose, -v    Enable verbose logging
-    --output, -o     Specify output filename (without .zip extension)
+    --output, -o     Specify custom folder name for playlist downloads
     --manual         For Spotify: manually enter track information
 """
 
@@ -133,7 +133,7 @@ Examples:
                 sys.exit(1)
             
             if not content_type:
-                log_error("Could not detect content type from URL. Please specify -song or -playlist.")
+                log_error("Could not detect content type from URL. Please specify 'song' or 'playlist'.")
                 sys.exit(1)
             
             log_info(f"Auto-detected: {platform} {content_type}")
@@ -218,7 +218,7 @@ Examples:
                 verbose=args.verbose
             )
         
-        else:
+                        else:
             log_error(f"Invalid content type: {args.type}")
             sys.exit(1)
         
